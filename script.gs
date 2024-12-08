@@ -1,4 +1,3 @@
-
 function sendEmailsBasedOnDepth() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -21,15 +20,15 @@ function sendEmailsBasedOnDepth() {
     const investorNamesCol = findColumnIndex(headers, 'investor names');
     const depthCol = findColumnIndex(headers, 'depth');
     const sentCol = findColumnIndex(headers, 'sent');
-    let subject;
-    // Create template map
+    
+    // Create template map with both subject and body
     const templateMap = new Map();
     for (let i = 1; i < templatesData.length; i++) {
       const depth = templatesData[i][0];
-      let subject=templatesData[i][1];
-      let template = templatesData[i][2];
+      const subject = templatesData[i][1];
+      const template = templatesData[i][2];
       if (depth !== '' && template !== '') {
-        templateMap.set(depth, template);
+        templateMap.set(depth, { subject, template });
       }
     }
     
@@ -52,14 +51,14 @@ example@company.com
         continue;
       }
       
-      const template = templateMap.get(depth);
-      if (!template) {
+      const templateData = templateMap.get(depth);
+      if (!templateData) {
         continue;
       }
       
       const from = "Rin";
       // Replace placeholders and add signature
-      let emailBody = template
+      let emailBody = templateData.template
         .replace('[Name]', `${row[firstNameCol]} ${row[lastNameCol]}`)
         .replace('[Company Name]', row[companyCol] || '')
         .replace('[Investor Names]', row[investorNamesCol] || '') + 
@@ -102,7 +101,7 @@ example@company.com
       try {
         MailApp.sendEmail({
           to: email,
-          subject: subject,
+          subject: templateData.subject,
           htmlBody: htmlBody,
           name: from
         });
